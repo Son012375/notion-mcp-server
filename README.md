@@ -1,151 +1,112 @@
-# Notion MCP Server
+# 노션 프로젝트 문서 자동화
 
-Claude Desktop/Code에서 Notion 데이터베이스를 직접 조작할 수 있는 MCP(Model Context Protocol) 서버입니다.
+Claude Code CLI를 활용한 프로젝트 문서 자동 정리 시스템
 
-## 기능
+## 특징
 
-- **페이지 생성** (`add_to_notion`): 마크다운 → Notion 페이지 자동 변환
-- **페이지 조회** (`get_page`): Notion 페이지 내용을 마크다운으로 읽기
-- **데이터베이스 조회** (`get_database`): 전체 페이지 목록 조회
-- **페이지 수정** (`update_page`): 기존 페이지 내용/속성 수정
+- **완전 무료**: Claude Pro 구독만 있으면 사용 가능
+- **간편한 사용**: 터미널에서 대화하듯이 문서 작성
+- **자동 구조화**: AI가 내용을 분석하여 노션 형식으로 정리
+- **기존 스타일 학습**: 기존 노션 문서 스타일을 참고하여 일관성 유지
 
-### 지원하는 마크다운 문법
+## 시스템 구조
 
-| 문법 | 예시 |
-|------|------|
-| 제목 | `# H1`, `## H2`, `### H3` |
-| 토글 | `▶ 토글 제목` (2칸 들여쓰기로 내용 추가) |
-| 중첩 토글 | 들여쓰기로 토글 안에 토글 |
-| 테이블 | `\| 컬럼1 \| 컬럼2 \|` |
-| 코드 블록 | ` ```python ` |
-| 목록 | `- 항목` 또는 `1. 항목` |
-| 체크박스 | `- [ ] 할일` 또는 `- [x] 완료` |
-| 인용 | `> 인용문` |
-| 구분선 | `---` |
-| 굵게/기울임 | `**굵게**`, `*기울임*` |
-| 인라인 코드 | `` `코드` `` |
+```
+[CLI 입력] → [Claude Code] → [노션 API] → [노션 데이터베이스]
+```
 
-## 설치 방법
+## 설치
 
-### 1. 저장소 클론
+### 1. 의존성 설치
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/notion-mcp-server.git
-cd notion-mcp-server/mcp-server
+pip install -r requirements.txt
 ```
 
-### 2. 의존성 설치
-
-```bash
-npm install
-```
-
-### 3. 환경 변수 설정
-
-```bash
-# .env.example을 복사해서 .env 생성
-cp ../.env.example ../.env
-```
-
-`.env` 파일을 열어 아래 값들을 입력:
-
-```env
-NOTION_API_KEY=your_notion_api_key_here
-NOTION_DATABASE_ID=your_database_id_here
-```
-
-### 4. Notion Integration 설정
+### 2. 노션 통합 설정
 
 1. https://www.notion.so/my-integrations 접속
-2. "새 API 통합" 클릭
-3. 이름 입력 후 생성
-4. "내부 통합 토큰" 복사 → `.env`의 `NOTION_API_KEY`에 입력
-5. Notion에서 연결할 데이터베이스 페이지 열기
-6. 우측 상단 `...` → "연결" → 생성한 Integration 선택
-7. 데이터베이스 URL에서 ID 복사 → `.env`의 `NOTION_DATABASE_ID`에 입력
+2. "새 통합 만들기" 클릭
+3. 이름: "프로젝트 문서화 봇"
+4. API 키 복사
 
-```
-https://www.notion.so/workspace/DATABASE_ID_HERE?v=...
-                          ^^^^^^^^^^^^^^^^^^^^^^^^
-                          이 부분이 Database ID
-```
+### 3. 노션 데이터베이스 ID 확인
 
-### 5. Claude Desktop 설정
+1. 노션에서 문서화할 데이터베이스 열기
+2. URL 확인: `https://www.notion.so/workspace/{database_id}?v=...`
+3. `database_id` 부분 복사
 
-`%APPDATA%\Claude\claude_desktop_config.json` 파일 수정:
+### 4. 환경 변수 설정
 
-```json
-{
-  "mcpServers": {
-    "notion": {
-      "command": "node",
-      "args": ["C:/절대경로/notion-mcp-server/mcp-server/index.js"]
-    }
-  }
-}
+`.env` 파일 생성:
+
+```env
+NOTION_API_KEY=secret_...
+NOTION_DATABASE_ID=...
 ```
 
-**중요**: `args`의 경로를 본인 PC의 실제 경로로 변경하세요.
+### 5. 노션 페이지에 권한 부여
 
-### 6. Claude Desktop 재시작
+1. 노션 데이터베이스 페이지 열기
+2. 우측 상단 "..." → "연결" → "프로젝트 문서화 봇" 선택
 
-설정 후 Claude Desktop을 완전히 종료했다가 다시 실행하세요.
+## 사용법
 
-## 사용 예시
+### 방법 1: 직접 대화
 
-Claude에게 다음과 같이 요청하면 됩니다:
+```bash
+python add_to_notion.py
 
-```
-"노션에 오늘 회의록 추가해줘"
-"노션 데이터베이스 목록 보여줘"
-"노션 페이지 ID xxx의 내용 읽어줘"
-```
-
-### 토글 작성 예시
-
-토글 내부 콘텐츠는 **2칸 들여쓰기** 필요:
-
-```markdown
-▶ 토글 제목
-  토글 내부 텍스트
-
-  | 컬럼1 | 컬럼2 |
-  |-------|-------|
-  | 값1   | 값2   |
-
-  ▶ 중첩 토글
-    중첩 내용
+# 프롬프트에 따라 입력
+# 프로젝트명: FastAPI JWT 인증
+# 내용: bcrypt로 비밀번호 해싱, Redis에 토큰 저장
 ```
 
-## 데이터베이스 속성
+### 방법 2: 인라인 입력
 
-이 MCP 서버는 다음 Notion 데이터베이스 속성을 사용합니다:
+```bash
+python add_to_notion.py "FastAPI JWT 인증" "bcrypt, Redis 사용"
+```
 
-| 속성명 | 타입 | 용도 |
-|--------|------|------|
-| 이름 | Title | 페이지 제목 |
-| 상태 | Status | 진행 상태 |
-| 선택 | Select | 카테고리 |
-| 다중 선택 | Multi-select | 태그 |
-| 날짜 | Date | 생성 날짜 |
+### 방법 3: 파일에서 읽기
 
-데이터베이스에 이 속성들이 없으면 생성하거나, `index.js`에서 속성명을 수정하세요.
+```bash
+echo "오늘 한 일..." > today.txt
+python add_to_notion.py --file today.txt
+```
+
+## 프로젝트 구조
+
+```
+notion-automation/
+├── README.md                 # 문서
+├── requirements.txt          # 의존성
+├── .env.example             # 환경변수 예시
+├── add_to_notion.py         # 메인 스크립트
+├── notion_client.py         # 노션 API 클라이언트
+└── utils/
+    └── formatter.py         # 텍스트 포매터
+```
+
+## 노션 데이터베이스 구조
+
+기본 속성:
+- **제목** (Title): 프로젝트명
+- **날짜** (Date): 작성일
+- **카테고리** (Select): 백엔드/프론트엔드/인프라 등
+- **상태** (Select): 진행중/완료/보류
+- **태그** (Multi-select): 관련 기술 스택
 
 ## 문제 해결
 
-### MCP 서버가 인식되지 않음
-- `claude_desktop_config.json` 경로 확인 (Windows: `%APPDATA%\Claude\`)
-- 경로에 역슬래시(`\`) 대신 슬래시(`/`) 사용
-- Claude Desktop 완전히 재시작
+### API 키 오류
+- 노션 통합 페이지에서 API 키 재확인
+- 페이지 권한 설정 확인
 
-### Notion API 오류
-- Integration이 데이터베이스에 연결되었는지 확인
-- API 키가 올바른지 확인
-- 데이터베이스 ID가 정확한지 확인
+### 데이터베이스 ID 오류
+- URL에서 정확한 ID 복사
+- v= 이후 부분 제외
 
-### 토글 내부 콘텐츠가 밖으로 나옴
-- 토글 내부 콘텐츠는 반드시 2칸 이상 들여쓰기
+## 라이센스
 
-## 라이선스
-
-MIT License
+MIT

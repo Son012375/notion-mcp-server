@@ -215,14 +215,15 @@ function parseToggleContent(lines, startIndex, baseIndent) {
     // Table inside toggle
     if (stripped.startsWith("|") && stripped.endsWith("|")) {
       const tableRows = [];
+      const tableStartIndent = currentIndent; // Use current line's indent as reference
 
       while (i < lines.length) {
         const rowLine = lines[i].trim();
         if (!(rowLine.startsWith("|") && rowLine.endsWith("|"))) break;
 
-        // Table row indent check: must be more than baseIndent to be inside toggle
+        // Table row indent check: must be at same or greater indent than first table row
         const rowIndent = lines[i].search(/\S|$/);
-        if (rowIndent <= baseIndent) break;
+        if (rowIndent < tableStartIndent) break;
 
         if (isTableSeparator(rowLine)) {
           i++;
